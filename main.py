@@ -3,13 +3,29 @@ from fastapi import FastAPI,Request
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import os
+import face_recognition
 from ultralytics import YOLO
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 model = YOLO("yolov8n.pt")
 
+known_faces = []
+known_names = []
+folder = "known_images"
+for file in os.listdir(folder):
+    if file.lower().endswith((".jpg", ".png", ".jpeg")):
+        path = os.path.join(folder, file)
+        name = os.path.splitext(file)[0]
+        image = face_recognition.load_image_file(path)
+        encodings = face_recognition.face_encodings(image)
+        if encodings:
+            known_faces.append(encodings[0])
+            known_names.append(name)
+
 camera = cv2.VideoCapture(0)
+recognized_faces = {}
 
 def generate_frames():
     while True:
@@ -18,8 +34,10 @@ def generate_frames():
             continue
 
         frame = cv2.flip(frame,1)
-        results = model(frame, conf=0.4, classes=[0])
+        results = model.track(frame, conf=0.4, classes=[0],persist=True,tracker="bytetrack.yaml")
         for r in results:
+            if r.boxes is None:
+                continue
             for box in r.boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 cv2.rectangle(frame, (x1, y1), (x2, y2),
