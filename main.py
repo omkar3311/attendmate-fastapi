@@ -45,13 +45,11 @@ def generate_frames():
                     continue
                 track_id = int(box.id[0])
 
-                # Default label
                 if track_id not in recognized_faces:
                     recognized_faces[track_id] = f"Person {track_id}"
 
                 name = recognized_faces[track_id]
 
-                # ---- FACE RECOGNITION ----
                 person_crop = frame[y1:y2, x1:x2]
                 if person_crop.size > 0:
                     rgb_crop = cv2.cvtColor(person_crop, cv2.COLOR_BGR2RGB)
