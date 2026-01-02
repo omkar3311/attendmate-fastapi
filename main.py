@@ -7,8 +7,11 @@ import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime
+from image import router as image_router
 
 app = FastAPI()
+app.include_router(image_router)
+
 templates = Jinja2Templates(directory="templates")
 model = YOLO("yolov8n.pt")
 
@@ -65,7 +68,8 @@ def generate_frames():
                 track_id = int(box.id[0])
 
                 if track_id not in recognized_faces:
-                    recognized_faces[track_id] = f"Person {track_id}"
+                    # recognized_faces[track_id] = f"Person {track_id}"
+                    recognized_faces[track_id] = None
 
                 name = recognized_faces[track_id]
                 
@@ -76,40 +80,31 @@ def generate_frames():
                     face_encodings = face_recognition.face_encodings(rgb_crop, face_locations)
 
                     for face_encoding in face_encodings:
-                        matches = face_recognition.compare_faces(
-                            known_faces, face_encoding, tolerance=0.5
-                        )
+                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.5)
                         if True in matches:
                             idx = matches.index(True)
                             recognized_faces[track_id] = known_names[idx]
                             name = known_names[idx]
                             break
+
                 current_slot = get_current_lecture_slot()
-                if current_slot and track_id is not None:
+                if current_slot and recognized_faces.get(track_id):
+                    name = recognized_faces[track_id]
                     if current_slot not in attendance_tracker:
                         attendance_tracker[current_slot] = {}
-
-                    if track_id not in attendance_tracker[current_slot]:
-                        attendance_tracker[current_slot][track_id] = {
-                                "name": name,
-                                "last_seen": datetime.now(),
-                                "total_time": 0
-                            }
-
-                    if recognized_faces[track_id] != attendance_tracker[current_slot][track_id]["name"]:
-                        attendance_tracker[current_slot][track_id]["name"] = recognized_faces[track_id]
-
+                    if name not in attendance_tracker[current_slot]:
+                        attendance_tracker[current_slot][name] = {
+                            "last_seen": datetime.now(),
+                            "total_time": 0}
                     now = datetime.now()
-                    last_seen = attendance_tracker[current_slot][track_id]["last_seen"]
-                    delta = (now - last_seen).seconds
+                    last_seen = attendance_tracker[current_slot][name]["last_seen"]
+                    delta = (now - last_seen).total_seconds()
+                    if delta < 3:
+                        attendance_tracker[current_slot][name]["total_time"] += delta
+                    attendance_tracker[current_slot][name]["last_seen"] = now
 
-                    if delta < 2:
-                        attendance_tracker[current_slot][track_id]["total_time"] += delta
-
-                    attendance_tracker[current_slot][track_id]["last_seen"] = now
-
-                cv2.rectangle(frame, (x1, y1), (x2, y2),
-                              (0, 255, 0), 2)
+                name = recognized_faces[track_id] or "Unknown"
+                cv2.rectangle(frame, (x1, y1), (x2, y2),(0, 255, 0), 2)
                 cv2.putText(frame, name,(x1, y1 - 10),cv2.FONT_HERSHEY_SIMPLEX,0.7, (0, 255, 0), 2)
 
         _, buffer = cv2.imencode(".jpg", frame)
@@ -133,14 +128,15 @@ def video_feed():
 @app.get("/live-attendance")
 def live_attendance():
     data = {}
-
     for slot, records in attendance_tracker.items():
         data[slot] = {}
-        for track_id, record in records.items():
-            data[slot][track_id] = {
-                "name": record["name"],
-                "minutes": record["total_time"] // 60,
-                "seconds": record["total_time"],
-                "status": "Present" if record["total_time"] >= 20 else "Absent"
-            }
+        for name, record in records.items():
+            total_seconds = int(record["total_time"])
+            minutes = total_seconds // 60
+            data[slot][name] = {
+                "name": name,
+                "minutes": minutes,
+                "seconds": total_seconds,
+                "status": "Present" if minutes >= 1 else "Absent"}
     return data
+    
