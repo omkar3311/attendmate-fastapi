@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 import os
 import face_recognition
 from ultralytics import YOLO
-from datetime import datetime
+from datetime import datetime,date
 from image import router as image_router
 
 app = FastAPI()
@@ -30,7 +30,7 @@ for file in os.listdir(folder):
 
 camera = cv2.VideoCapture(0)
 recognized_faces = {}
-
+TODAY = date.today().isoformat()
 attendance_tracker = {}
 lecture_slots = [
     ("10:00", "11:00"),
@@ -52,69 +52,76 @@ def get_current_lecture_slot():
 def generate_frames():
     person_counter = 0
     while True:
-        success, frame = camera.read()
-        if not success:
-            continue
-
-        frame = cv2.flip(frame,1)
-        results = model.track(frame, conf=0.4, classes=[0],persist=True,tracker="bytetrack.yaml")
-        for r in results:
-            if r.boxes is None:
+        try:
+            success, frame = camera.read()
+            if not success:
                 continue
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                if box.id is None:
+
+            frame = cv2.flip(frame,1)
+            today = date.today().isoformat()
+            current_slot = get_current_lecture_slot()
+            results = model.track(frame, conf=0.4, classes=[0],persist=True,tracker="bytetrack.yaml")
+            for r in results:
+                if r.boxes is None:
                     continue
-                track_id = int(box.id[0])
+                for box in r.boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])
+                    if box.id is None:
+                        continue
+                    track_id = int(box.id[0])
 
-                if track_id not in recognized_faces:
-                    # recognized_faces[track_id] = f"Person {track_id}"
-                    recognized_faces[track_id] = None
+                    if track_id not in recognized_faces:
+                        # recognized_faces[track_id] = f"Person {track_id}"
+                        recognized_faces[track_id] = None
 
-                name = recognized_faces[track_id]
-                
-                person_crop = frame[y1:y2, x1:x2]
-                if person_crop.size > 0:
-                    rgb_crop = cv2.cvtColor(person_crop, cv2.COLOR_BGR2RGB)
-                    face_locations = face_recognition.face_locations(rgb_crop)
-                    face_encodings = face_recognition.face_encodings(rgb_crop, face_locations)
-
-                    for face_encoding in face_encodings:
-                        matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.5)
-                        if True in matches:
-                            idx = matches.index(True)
-                            recognized_faces[track_id] = known_names[idx]
-                            name = known_names[idx]
-                            break
-
-                current_slot = get_current_lecture_slot()
-                if current_slot and recognized_faces.get(track_id):
                     name = recognized_faces[track_id]
-                    if current_slot not in attendance_tracker:
-                        attendance_tracker[current_slot] = {}
-                    if name not in attendance_tracker[current_slot]:
-                        attendance_tracker[current_slot][name] = {
-                            "last_seen": datetime.now(),
-                            "total_time": 0}
-                    now = datetime.now()
-                    last_seen = attendance_tracker[current_slot][name]["last_seen"]
-                    delta = (now - last_seen).total_seconds()
-                    if delta < 3:
-                        attendance_tracker[current_slot][name]["total_time"] += delta
-                    attendance_tracker[current_slot][name]["last_seen"] = now
+                    
+                    person_crop = frame[y1:y2, x1:x2]
+                    if person_crop.size > 0:
+                        rgb_crop = cv2.cvtColor(person_crop, cv2.COLOR_BGR2RGB)
+                        face_locations = face_recognition.face_locations(rgb_crop)
+                        face_encodings = face_recognition.face_encodings(rgb_crop, face_locations)
 
-                name = recognized_faces[track_id] or "Unknown"
-                cv2.rectangle(frame, (x1, y1), (x2, y2),(0, 255, 0), 2)
-                cv2.putText(frame, name,(x1, y1 - 10),cv2.FONT_HERSHEY_SIMPLEX,0.7, (0, 255, 0), 2)
+                        for face_encoding in face_encodings:
+                            matches = face_recognition.compare_faces(known_faces, face_encoding, tolerance=0.5)
+                            if True in matches:
+                                idx = matches.index(True)
+                                recognized_faces[track_id] = known_names[idx]
+                                name = known_names[idx]
+                                break
 
-        _, buffer = cv2.imencode(".jpg", frame)
-        
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" +
-            buffer.tobytes() +
-            b"\r\n"
-        )
+                    if current_slot and name:
+                        attendance_tracker.setdefault(today, {})
+                        attendance_tracker[today].setdefault(current_slot, {})
+
+                        if name not in attendance_tracker[today][current_slot]:
+                            attendance_tracker[today][current_slot][name] = {
+                                "last_seen": datetime.now(),
+                                "total_time": 0
+                            }
+                        now = datetime.now()
+                        last_seen = attendance_tracker[today][current_slot][name]["last_seen"]
+                        delta = (now - last_seen).total_seconds()
+
+                        if delta < 3:
+                            attendance_tracker[today][current_slot][name]["total_time"] += delta
+                        attendance_tracker[today][current_slot][name]["last_seen"] = now
+
+                    name = recognized_faces[track_id] or "Unknown"
+                    cv2.rectangle(frame, (x1, y1), (x2, y2),(0, 255, 0), 2)
+                    cv2.putText(frame, name,(x1, y1 - 10),cv2.FONT_HERSHEY_SIMPLEX,0.7, (0, 255, 0), 2)
+
+            _, buffer = cv2.imencode(".jpg", frame)
+            
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" +
+                buffer.tobytes() +
+                b"\r\n"
+            )
+        except Exception as e:
+            print("VIDEO ERROR:", e)
+            continue
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
@@ -128,15 +135,16 @@ def video_feed():
 @app.get("/live-attendance")
 def live_attendance():
     data = {}
-    for slot, records in attendance_tracker.items():
-        data[slot] = {}
-        for name, record in records.items():
-            total_seconds = int(record["total_time"])
-            minutes = total_seconds // 60
-            data[slot][name] = {
-                "name": name,
-                "minutes": minutes,
-                "seconds": total_seconds,
-                "status": "Present" if minutes >= 1 else "Absent"}
+    for day, slots in attendance_tracker.items():
+        data[day] = {}
+        for slot, records in slots.items():
+            data[day][slot] = {}
+            for name, record in records.items():
+                total_seconds = int(record["total_time"])
+                minutes = total_seconds // 60
+                data[day][slot][name] = {
+                    "name": name,
+                    "minutes": minutes,
+                    "status": "Present" if minutes >= 1 else "Absent"
+                }
     return data
-    
