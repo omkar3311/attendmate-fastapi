@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 import os
 import face_recognition
 from ultralytics import YOLO
+from datetime import datetime
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -26,6 +27,24 @@ for file in os.listdir(folder):
 
 camera = cv2.VideoCapture(0)
 recognized_faces = {}
+
+attendance_tracker = {}
+lecture_slots = [
+    ("10:00", "11:00"),
+    ("11:00", "12:00"),
+    ("12:45", "13:45"),
+    ("13:45", "14:45"),
+    ("15:00", "17:00")
+]
+
+def get_current_lecture_slot():
+    now = datetime.now().time()
+    for start, end in lecture_slots:
+        s = datetime.strptime(start, "%H:%M").time()
+        e = datetime.strptime(end, "%H:%M").time()
+        if s <= now <= e:
+            return f"{start}-{end}"
+    return None
 
 def generate_frames():
     person_counter = 0
@@ -49,14 +68,12 @@ def generate_frames():
                     recognized_faces[track_id] = f"Person {track_id}"
 
                 name = recognized_faces[track_id]
-
+                
                 person_crop = frame[y1:y2, x1:x2]
                 if person_crop.size > 0:
                     rgb_crop = cv2.cvtColor(person_crop, cv2.COLOR_BGR2RGB)
                     face_locations = face_recognition.face_locations(rgb_crop)
-                    face_encodings = face_recognition.face_encodings(
-                        rgb_crop, face_locations
-                    )
+                    face_encodings = face_recognition.face_encodings(rgb_crop, face_locations)
 
                     for face_encoding in face_encodings:
                         matches = face_recognition.compare_faces(
@@ -67,11 +84,36 @@ def generate_frames():
                             recognized_faces[track_id] = known_names[idx]
                             name = known_names[idx]
                             break
+                current_slot = get_current_lecture_slot()
+                if current_slot and track_id is not None:
+                    if current_slot not in attendance_tracker:
+                        attendance_tracker[current_slot] = {}
+
+                    if track_id not in attendance_tracker[current_slot]:
+                        attendance_tracker[current_slot][track_id] = {
+                                "name": name,
+                                "last_seen": datetime.now(),
+                                "total_time": 0
+                            }
+
+                    if recognized_faces[track_id] != attendance_tracker[current_slot][track_id]["name"]:
+                        attendance_tracker[current_slot][track_id]["name"] = recognized_faces[track_id]
+
+                    now = datetime.now()
+                    last_seen = attendance_tracker[current_slot][track_id]["last_seen"]
+                    delta = (now - last_seen).seconds
+
+                    if delta < 2:
+                        attendance_tracker[current_slot][track_id]["total_time"] += delta
+
+                    attendance_tracker[current_slot][track_id]["last_seen"] = now
+
                 cv2.rectangle(frame, (x1, y1), (x2, y2),
                               (0, 255, 0), 2)
                 cv2.putText(frame, name,(x1, y1 - 10),cv2.FONT_HERSHEY_SIMPLEX,0.7, (0, 255, 0), 2)
 
         _, buffer = cv2.imencode(".jpg", frame)
+        
         yield (
             b"--frame\r\n"
             b"Content-Type: image/jpeg\r\n\r\n" +
@@ -88,3 +130,17 @@ def video_feed():
         generate_frames(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+@app.get("/live-attendance")
+def live_attendance():
+    data = {}
+
+    for slot, records in attendance_tracker.items():
+        data[slot] = {}
+        for track_id, record in records.items():
+            data[slot][track_id] = {
+                "name": record["name"],
+                "minutes": record["total_time"] // 60,
+                "seconds": record["total_time"],
+                "status": "Present" if record["total_time"] >= 20 else "Absent"
+            }
+    return data
