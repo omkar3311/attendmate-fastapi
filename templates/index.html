@@ -28,10 +28,19 @@
             </form>
         </div>
     </div>
-    <div id="attendance">
-        <h2>LIVE ATTENDANCE</h2>
-        <div id="attendance-data">Loading attendance...</div>
-    </div>
+    <div>
+        <div id="attendance">
+            <h2>LIVE ATTENDANCE</h2>
+            <div id="attendance-data">Loading attendance...</div>
+        </div>
+        <div style="margin-top: 20px;">
+            <a href="/export/csv">
+                <button style="padding: 10px 15px; font-size: 14px;">
+                    ⬇ Download Attendance (CSV)
+                </button>
+            </a>
+        </div></div>
+
 
     <script>
     async function fetchAttendance() {
