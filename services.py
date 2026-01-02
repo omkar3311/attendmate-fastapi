@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime,date
 load_dotenv()
 import csv
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse,JSONResponse
 
 key = os.getenv("key")
 url = os.getenv("url")
@@ -25,13 +25,16 @@ def is_allowed(filename: str) -> bool:
 @router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     if not is_allowed(file.filename):
-        raise HTTPException(
-            status_code=400,
-            detail="Only JPG, JPEG, PNG files are allowed"
-        )
+        raise HTTPException(status_code=400, detail="Only JPG, JPEG, PNG files are allowed")
+
     save_path = os.path.join(UPLOAD_FOLDER, file.filename)
     with open(save_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+        
+    return JSONResponse(
+        status_code=200,
+        content={"message": "Image uploaded successfully"}
+    )
 
 @router.get("/export/csv")
 def download_csv():
