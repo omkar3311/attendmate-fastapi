@@ -4,87 +4,45 @@
     <meta charset="UTF-8">
     <title>AttendMate</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; gap: 50px; padding: 20px; }
-        #teacher, #attendance { flex: 1; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
 </head>
+
 <body>
-    <div>
-        <div id="teacher">
-            <h2>LIVE FEED</h2>
-            <img src="/video_feed" width="640" height="480">
-        </div>
+    <header>
+        <h1>AttendMate</h1>
+        <p>AI-Powered Live Attendance System</p>
+    </header>
 
-        <h2>Upload Known Image</h2>
-        <div id ="upload">
-            <form action="/upload-image" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
-                <br><br>
-                <button type="submit">Upload</button>
-            </form>
-        </div>
-    </div>
-    <div>
-        <div id="attendance">
-            <h2>LIVE ATTENDANCE</h2>
-            <div id="attendance-data">Loading attendance...</div>
-        </div>
-        <div style="margin-top: 20px;">
-            <a href="/export/csv">
-                <button style="padding: 10px 15px; font-size: 14px;">
-                    ⬇ Download Attendance (CSV)
-                </button>
-            </a>
-        </div></div>
+    <main class="container">
+        <section class="left-panel">
+            <div class="card">
+                <h2>Live Feed</h2>
+                <img src="/video_feed" alt="Live Camera Feed">
+            </div>
 
+            <div class="card">
+                <h2>Upload Known Image</h2>
+                <form id="upload-form" enctype="multipart/form-data">
+                    <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
+                    <button type="submit">Upload</button>
+                    <p id="upload-status"></p>
+                </form>
+            </div>
+        </section>
 
-    <script>
-    async function fetchAttendance() {
-        try {
-            const response = await fetch("/live-attendance");
-            const data = await response.json();
+        <section class="right-panel">
+            <div class="card">
+                <h2>Live Attendance</h2>
+                <div id="attendance-data">Loading attendance...</div>
+            </div>
 
-            let html = "";
+            <div class="card download-card">
+                <a href="/export/csv">
+                    <button class="download-btn">⬇ Download Attendance (CSV)</button>
+                </a>
+            </div>
+        </section>
+    </main>
 
-            for (const date in data) {
-                html += `<h2>Date: ${date}</h2>`;
-
-                for (const slot in data[date]) {
-                    html += `
-                        <h3>${slot}</h3>
-                        <table>
-                            <tr>
-                                <th>Name</th>
-                                <th>Status</th>
-                                <th>Minutes</th>
-                            </tr>
-                    `;
-                    for (const name in data[date][slot]) {
-                        const person = data[date][slot][name];
-                        html += `
-                            <tr>
-                                <td>${person.name}</td>
-                                <td>${person.status}</td>
-                                <td>${person.minutes}</td>
-                            </tr>
-                        `;
-                    }
-                    html += "</table>";
-                }
-            }
-            document.getElementById("attendance-data").innerHTML = html;
-        } catch (err) {
-            console.error("Error fetching attendance:", err);
-        }
-    }
-
-    setInterval(fetchAttendance, 1000);
-    window.onload = fetchAttendance;
-</script>
-
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
