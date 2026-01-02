@@ -7,10 +7,10 @@ import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime,date
-from image import router as image_router
+from services import router,save_slot_attendance
 
 app = FastAPI()
-app.include_router(image_router)
+app.include_router(router)
 
 templates = Jinja2Templates(directory="templates")
 model = YOLO("yolov8n.pt")
@@ -31,6 +31,8 @@ for file in os.listdir(folder):
 camera = cv2.VideoCapture(0)
 recognized_faces = {}
 TODAY = date.today().isoformat()
+LAST_SLOT = None
+
 attendance_tracker = {}
 lecture_slots = [
     ("10:00", "11:00"),
@@ -59,7 +61,13 @@ def generate_frames():
 
             frame = cv2.flip(frame,1)
             today = date.today().isoformat()
+
+            global LAST_SLOT
             current_slot = get_current_lecture_slot()
+            if LAST_SLOT and current_slot != LAST_SLOT:
+                save_slot_to_supabase(attendance_tracker,LAST_SLOT)
+            LAST_SLOT = current_slot
+
             results = model.track(frame, conf=0.4, classes=[0],persist=True,tracker="bytetrack.yaml")
             for r in results:
                 if r.boxes is None:
@@ -132,6 +140,7 @@ def video_feed():
         generate_frames(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+
 @app.get("/live-attendance")
 def live_attendance():
     data = {}
@@ -148,3 +157,13 @@ def live_attendance():
                     "status": "Present" if minutes >= 1 else "Absent"
                 }
     return data
+
+@app.on_event("shutdown")
+def shutdown_event():
+    print("🔻 Server shutting down...")
+    global LAST_SLOT
+    if LAST_SLOT:
+        print(f"💾 Saving attendance for slot: {LAST_SLOT}")
+        save_slot_attendance(attendance_tracker, LAST_SLOT)
+    else:
+        print("⚠ No active slot to save")
