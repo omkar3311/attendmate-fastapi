@@ -13,43 +13,69 @@
     </style>
 </head>
 <body>
-    <div id="teacher">
-        <h2>LIVE FEED</h2>
-        <img src="/video_feed" width="640" height="480">
-    </div>
+    <div>
+        <div id="teacher">
+            <h2>LIVE FEED</h2>
+            <img src="/video_feed" width="640" height="480">
+        </div>
 
+        <h2>Upload Known Image</h2>
+        <div id ="upload">
+            <form action="/upload-image" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".jpg,.jpeg,.png" required>
+                <br><br>
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+    </div>
     <div id="attendance">
         <h2>LIVE ATTENDANCE</h2>
         <div id="attendance-data">Loading attendance...</div>
     </div>
 
     <script>
-        async function fetchAttendance() {
-            try {
-                const response = await fetch("/live-attendance");
-                const data = await response.json();
+    async function fetchAttendance() {
+        try {
+            const response = await fetch("/live-attendance");
+            const data = await response.json();
 
-                let html = "";
-                for (const slot in data) {
-                    html += `<h3>${slot}</h3><table><tr><th>Name</th><th>Status</th><th>Minutes</th></tr>`;
-                    for (const name in data[slot]) {
-                        const person = data[slot][name];
-                        html += `<tr>
-                                    <td>${name}</td>
-                                    <td>${person.status}</td>
-                                    <td>${person.minutes}</td>
-                                 </tr>`;
-                    }
-                    html += "</table>";
+            let html = "";
+
+            for (const slot in data) {
+                html += `
+                    <h3>${slot}</h3>
+                    <table>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Minutes</th>
+                        </tr>
+                `;
+
+                for (const trackId in data[slot]) {
+                    const person = data[slot][trackId];
+
+                    html += `
+                        <tr>
+                            <td>${person.name}</td>
+                            <td>${person.status}</td>
+                            <td>${person.minutes}</td>
+                        </tr>
+                    `;
                 }
-                document.getElementById("attendance-data").innerHTML = html;
-            } catch (err) {
-                console.error("Error fetching attendance:", err);
-            }
-        }
 
-        setInterval(fetchAttendance, 2000);
-        window.onload = fetchAttendance;
-    </script>
+                html += "</table>";
+            }
+
+            document.getElementById("attendance-data").innerHTML = html;
+        } catch (err) {
+            console.error("Error fetching attendance:", err);
+        }
+    }
+
+    setInterval(fetchAttendance, 1000);
+    window.onload = fetchAttendance;
+</script>
+
 </body>
 </html>
