@@ -11,7 +11,7 @@ from services import router,save_slot_attendance
 
 app = FastAPI()
 app.include_router(router)
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 model = YOLO("yolov8n.pt")
 
@@ -39,7 +39,8 @@ lecture_slots = [
     ("11:00", "12:00"),
     ("12:45", "13:45"),
     ("13:45", "14:45"),
-    ("15:00", "17:00")
+    ("15:00", "17:00"),
+    ("17:00", "18:00") #demo
 ]
 
 def get_current_lecture_slot():
