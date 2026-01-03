@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            margin-top: 30px;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .present {
+            color: green;
+            font-weight: bold;
+        }
+        .absent {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>My Attendance</h1>
+
+{% for date, slots in attendance.items() %}
+    <h2>{{ date }}</h2>
+
+    <table>
+        <tr>
+            <th>Slot</th>
+            <th>Status</th>
+        </tr>
+
+        {% for slot, status in slots.items() %}
+        <tr>
+            <td>{{ slot }}</td>
+            <td class="{{ 'present' if status == 'Present' else 'absent' }}">
+                {{ status }}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endfor %}
+
+</body>
+</html>
