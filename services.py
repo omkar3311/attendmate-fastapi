@@ -143,3 +143,29 @@ def get_student_attendance(name: str):
         attendance[date][slot] = status
 
     return attendance
+
+def login_or_register_student(name: str, prn: str, password: str) -> bool:
+    res = (
+        supabase
+        .table("students")
+        .select("id, password")
+        .eq("name", name)
+        .eq("prn", prn)
+        .execute()
+    )
+
+    if not res.data:
+        insert_res = (
+            supabase
+            .table("students")
+            .insert({
+                "name": name,
+                "prn": prn,
+                "password": password
+            })
+            .execute()
+        )
+        return True 
+
+    stored_password = res.data[0]["password"]
+    return stored_password == password
