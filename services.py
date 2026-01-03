@@ -1,5 +1,6 @@
 import os
 import shutil
+import face_recognition
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from supabase import create_client
 from dotenv import load_dotenv
@@ -35,6 +36,34 @@ async def upload_image(file: UploadFile = File(...)):
         status_code=200,
         content={"message": "Image uploaded successfully"}
     )
+    load_known_faces()
+
+known_faces = []
+known_names = []
+folder = "known_images"
+def load_known_faces():
+    known_faces.clear()
+    known_names.clear()
+    for file in os.listdir(folder):
+        if file.lower().endswith((".jpg", ".png", ".jpeg")):
+            path = os.path.join(folder, file)
+            name = os.path.splitext(file)[0]
+            image = face_recognition.load_image_file(path)
+            encodings = face_recognition.face_encodings(image)
+            if encodings:
+                known_faces.append(encodings[0])
+                known_names.append(name)
+
+def add_new_face(image_path, name):
+    image = face_recognition.load_image_file(image_path)
+    encodings = face_recognition.face_encodings(image)
+
+    if not encodings:
+        raise ValueError("No face found")
+
+    known_faces.append(encodings[0])
+    known_names.append(name)
+
 
 @router.get("/export/csv")
 def download_csv():
@@ -48,22 +77,42 @@ def save_slot_attendance(attendance_tracker, slot):
         return
     if slot not in attendance_tracker[today]:
         return
-    records = []
     for name, record in attendance_tracker[today][slot].items():
-        minutes = int(record["total_time"] // 60)
-        status = "Present" if minutes >= 1 else "Absent"
-        records.append({
-            "name": name,
-            "date": today,
-            "slot": slot,
-            "minutes": minutes,
-            "status": status
-        })
-    if records:
+        session_minutes = int(record["total_time"] // 60)
+
         try:
-            supabase.table("attendance").upsert(records).execute()
+            existing = (
+                supabase.table("attendance")
+                .select("minutes")
+                .eq("name", name)
+                .eq("date", today)
+                .eq("slot", slot)
+                .limit(1)
+                .execute()
+            )
+
+            if existing.data:
+                total_minutes = (existing.data[0]["minutes"] or 0) + session_minutes
+                status = "Present" if total_minutes >= 1 else "Absent"
+
+                supabase.table("attendance").update({
+                    "minutes": total_minutes,
+                    "status": status
+                }).eq("name", name).eq("date", today).eq("slot", slot).execute()
+
+            else:
+                status = "Present" if session_minutes >= 1 else "Absent"
+
+                supabase.table("attendance").insert({
+                    "name": name,
+                    "date": today,
+                    "slot": slot,
+                    "minutes": session_minutes,
+                    "status": status
+                }).execute()
+
         except Exception as e:
-            print("Export failed:", e)
+            print("Attendance save failed:", e)
 
 def export_attendance_csv(filename="attendance.csv"):
     try:
