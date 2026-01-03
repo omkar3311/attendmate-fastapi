@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            width: 350px;
+            border-radius: 6px;
+        }
+        .role-boxes {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .role {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .active {
+            background: #c8f7c5;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="role-boxes">
+        <div id="studentBox" class="role active" onclick="selectRole('student')">Student</div>
+        <div id="teacherBox" class="role" onclick="selectRole('teacher')">Teacher</div>
+    </div>
+
+    <form method="post" action="/login">
+        <input type="hidden" name="role" id="role" value="student">
+
+        <div id="studentFields">
+            <input name="name" placeholder="Student Name" required>
+            <input name="prn" placeholder="PRN Number" required>
+            <input type="password" name="password" placeholder="Password" required>
+        </div>
+
+        <div id="teacherFields" class="hidden">
+            <input name="teacher_id" placeholder="Teacher ID">
+            <input name="teacher_name" placeholder="Teacher Name">
+            <input type="password" name="teacher_password" placeholder="Password">
+        </div>
+
+        <button type="submit">Login</button>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+function selectRole(role) {
+    document.getElementById("role").value = role;
+
+    document.getElementById("studentBox").classList.remove("active");
+    document.getElementById("teacherBox").classList.remove("active");
+
+    document.getElementById("studentFields").classList.add("hidden");
+    document.getElementById("teacherFields").classList.add("hidden");
+
+    if (role === "student") {
+        document.getElementById("studentBox").classList.add("active");
+        document.getElementById("studentFields").classList.remove("hidden");
+    } else {
+        document.getElementById("teacherBox").classList.add("active");
+        document.getElementById("teacherFields").classList.remove("hidden");
+    }
+}
+</script>
+
+</body>
+</html>
