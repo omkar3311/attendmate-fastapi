@@ -1,13 +1,13 @@
 import cv2
-from fastapi import FastAPI,Request
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI,Request, Form
+from fastapi.responses import StreamingResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime,date
-from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance
+from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance,login_or_register_student
 
 app = FastAPI()
 app.include_router(router)
@@ -119,13 +119,57 @@ def generate_frames():
         except Exception as e:
             print("VIDEO ERROR:", e)
             continue
+
 @app.get("/")
-def home(request: Request):
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login")
+def login(
+    request: Request,
+    role: str = Form(...),
+
+    name: str = Form(None),
+    prn: str = Form(None),
+    password: str = Form(None),
+
+    teacher_id: str = Form(None),
+    teacher_name: str = Form(None),
+    teacher_password: str = Form(None),
+):
+    if role == "student":
+        ok = login_or_register_student(name, prn, password)
+
+        if not ok:
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error": "Invalid credentials"}
+            )
+
+        return RedirectResponse(
+            url=f"/student/dashboard?name={name}",
+            status_code=302
+        )
+
+    if role == "teacher":
+        if teacher_id != "123":
+            return templates.TemplateResponse(
+                "login.html",
+                {"request": request, "error": "Invalid teacher ID"}
+            )
+
+        return RedirectResponse(
+            url="/index",
+            status_code=302
+        )
+
+@app.get("/index")
+def teacher_dashboard(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/student/dashboard")
 def student_dashboard(request: Request, name: str):
-    name = "omkar"
+    # name = "omkar"
     attendance = get_student_attendance(name)
     return templates.TemplateResponse(
         "student.html",
