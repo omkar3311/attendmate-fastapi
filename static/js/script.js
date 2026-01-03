@@ -3,6 +3,7 @@ async function fetchAttendance() {
         const response = await fetch("/live-attendance");
         const data = await response.json();
         let html = "";
+        let attendanceLive = false;
         for (const date in data) {
             html += `<h3>Date: ${date}</h3>`;
 
@@ -18,6 +19,7 @@ async function fetchAttendance() {
                 `;
                 for (const name in data[date][slot]) {
                     const person = data[date][slot][name];
+                    attendanceLive = true;
                     html += `
                         <tr>
                             <td>${person.name}</td>
@@ -28,6 +30,12 @@ async function fetchAttendance() {
                 html += "</table>";
             }}
         document.getElementById("attendance-data").innerHTML = html;
+        const camera = document.getElementById("live-camera");
+        if (attendanceLive) {
+            camera.classList.add("active");
+        } else {
+            camera.classList.remove("active");
+        }
 
     } catch (error) {
         console.error("Failed to fetch attendance:", error);
