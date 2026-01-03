@@ -54,17 +54,6 @@ def load_known_faces():
                 known_faces.append(encodings[0])
                 known_names.append(name)
 
-def add_new_face(image_path, name):
-    image = face_recognition.load_image_file(image_path)
-    encodings = face_recognition.face_encodings(image)
-
-    if not encodings:
-        raise ValueError("No face found")
-
-    known_faces.append(encodings[0])
-    known_names.append(name)
-
-
 @router.get("/export/csv")
 def download_csv():
     filename = "attendance.csv"
@@ -130,3 +119,27 @@ def export_attendance_csv(filename="attendance.csv"):
         print(f"Attendance exported to {filename}")
     except Exception as e:
         print("Export failed:", e)
+        
+def get_student_attendance(name: str):
+    response = (
+        supabase
+        .table("attendance")
+        .select("date, slot, status")
+        .eq("name", name)
+        .order("date", desc=True)
+        .execute()
+    )
+    if not response.data:
+        return {}
+    attendance = {}
+    for row in response.data:
+        date = row["date"]
+        slot = row["slot"]
+        status = row["status"]
+
+        if date not in attendance:
+            attendance[date] = {}
+
+        attendance[date][slot] = status
+
+    return attendance
