@@ -7,7 +7,7 @@ import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime,date
-from services import router,save_slot_attendance
+from services import router,save_slot_attendance,known_faces, known_names, load_known_faces
 
 app = FastAPI()
 app.include_router(router)
@@ -15,18 +15,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 model = YOLO("yolov8n.pt")
 
-known_faces = []
-known_names = []
-folder = "known_images"
-for file in os.listdir(folder):
-    if file.lower().endswith((".jpg", ".png", ".jpeg")):
-        path = os.path.join(folder, file)
-        name = os.path.splitext(file)[0]
-        image = face_recognition.load_image_file(path)
-        encodings = face_recognition.face_encodings(image)
-        if encodings:
-            known_faces.append(encodings[0])
-            known_names.append(name)
+load_known_faces()
 
 camera = cv2.VideoCapture(0)
 recognized_faces = {}
