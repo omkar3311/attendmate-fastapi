@@ -7,7 +7,7 @@ import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime,date
-from services import router,save_slot_attendance,known_faces, known_names, load_known_faces
+from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance
 
 app = FastAPI()
 app.include_router(router)
@@ -28,8 +28,7 @@ lecture_slots = [
     ("11:00", "12:00"),
     ("12:45", "13:45"),
     ("13:45", "14:45"),
-    ("15:00", "17:00"),
-    ("17:00", "18:00") #demo
+    ("15:00", "17:00")
 ]
 
 def get_current_lecture_slot():
@@ -123,7 +122,19 @@ def generate_frames():
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-    
+
+@app.get("/student/dashboard")
+def student_dashboard(request: Request, name: str):
+    name = "omkar"
+    attendance = get_student_attendance(name)
+    return templates.TemplateResponse(
+        "student.html",
+        {
+            "request": request,
+            "attendance": attendance
+        }
+    )
+
 @app.get("/video_feed")
 def video_feed():
     return StreamingResponse(
