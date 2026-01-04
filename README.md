@@ -50,5 +50,5 @@ Open API Docs:
 
 ## 👨‍💻 **Author**
 
-**Omkar**  
+**Omkar Waghmare**  
 Engineering in Computer Science | Aspiring Data Scientist
