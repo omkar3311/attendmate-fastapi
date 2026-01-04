@@ -37,17 +37,15 @@ git clone https://github.com/omkar3311/attendmate-fastapi.git
 cd attendmate-fastapi
 pip install -r requirements.txt
 uvicorn main:app --reload
-
-bash```
+```
+```bash
 Open API Docs:
 📘 http://127.0.0.1:8000/docs
 ```
----
 ## 📁 Project Status
 
 🚧 Actively under development — focused on improving accuracy, tracking, and UI integration.
 
----
 ## 👨‍💻 Author
 
 Omkar
