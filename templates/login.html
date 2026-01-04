@@ -52,23 +52,27 @@
 
 <div class="container">
     <div class="role-boxes">
-        <div id="studentBox" class="role active" onclick="selectRole('student')">Student</div>
-        <div id="teacherBox" class="role" onclick="selectRole('teacher')">Teacher</div>
+        <div id="studentBox" class="role active" onclick="selectRole('student')">
+            Student
+        </div>
+        <div id="teacherBox" class="role" onclick="selectRole('teacher')">
+            Teacher
+        </div>
     </div>
 
     <form method="post" action="/login">
         <input type="hidden" name="role" id="role" value="student">
 
         <div id="studentFields">
-            <input name="name" placeholder="Student Name" required>
-            <input name="prn" placeholder="PRN Number" required>
-            <input type="password" name="password" placeholder="Password" required>
+            <input id="student_name" name="name" placeholder="Student Name">
+            <input id="student_prn" name="prn" placeholder="PRN Number">
+            <input id="student_password" type="password" name="password" placeholder="Password">
         </div>
 
         <div id="teacherFields" class="hidden">
-            <input name="teacher_id" placeholder="Teacher ID">
-            <input name="teacher_name" placeholder="Teacher Name">
-            <input type="password" name="teacher_password" placeholder="Password">
+            <input id="teacher_id" name="teacher_id" placeholder="Teacher ID">
+            <input id="teacher_name" name="teacher_name" placeholder="Teacher Name">
+            <input id="teacher_password" type="password" name="teacher_password" placeholder="Password">
         </div>
 
         <button type="submit">Login</button>
@@ -83,20 +87,42 @@
 function selectRole(role) {
     document.getElementById("role").value = role;
 
-    document.getElementById("studentBox").classList.remove("active");
-    document.getElementById("teacherBox").classList.remove("active");
+    const studentBox = document.getElementById("studentBox");
+    const teacherBox = document.getElementById("teacherBox");
+    const studentFields = document.getElementById("studentFields");
+    const teacherFields = document.getElementById("teacherFields");
 
-    document.getElementById("studentFields").classList.add("hidden");
-    document.getElementById("teacherFields").classList.add("hidden");
+    studentBox.classList.remove("active");
+    teacherBox.classList.remove("active");
+    studentFields.classList.add("hidden");
+    teacherFields.classList.add("hidden");
+
+    document.getElementById("student_name").required = false;
+    document.getElementById("student_prn").required = false;
+    document.getElementById("student_password").required = false;
+
+    document.getElementById("teacher_id").required = false;
+    document.getElementById("teacher_name").required = false;
+    document.getElementById("teacher_password").required = false;
 
     if (role === "student") {
-        document.getElementById("studentBox").classList.add("active");
-        document.getElementById("studentFields").classList.remove("hidden");
+        studentBox.classList.add("active");
+        studentFields.classList.remove("hidden");
+
+        document.getElementById("student_name").required = true;
+        document.getElementById("student_prn").required = true;
+        document.getElementById("student_password").required = true;
     } else {
-        document.getElementById("teacherBox").classList.add("active");
-        document.getElementById("teacherFields").classList.remove("hidden");
+        teacherBox.classList.add("active");
+        teacherFields.classList.remove("hidden");
+
+        document.getElementById("teacher_id").required = true;
+        document.getElementById("teacher_name").required = true;
+        document.getElementById("teacher_password").required = true;
     }
 }
+
+selectRole("student");
 </script>
 
 </body>
