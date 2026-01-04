@@ -120,10 +120,6 @@ def generate_frames():
             print("VIDEO ERROR:", e)
             continue
 
-@app.get("/")
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
-
 @app.post("/login")
 def login(
     request: Request,
@@ -162,6 +158,13 @@ def login(
             url="/index",
             status_code=302
         )
+@app.get("/")
+def home_page(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+@app.get("/login")
+def login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/index")
 def teacher_dashboard(request: Request):
