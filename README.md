@@ -38,15 +38,17 @@ cd attendmate-fastapi
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-```bash
+
 Open API Docs:
+```bash
 📘 http://127.0.0.1:8000/docs
 ```
+
 ## 📁 Project Status
 
 🚧 Actively under development — focused on improving accuracy, tracking, and UI integration.
 
 ## 👨‍💻 Author
 
-Omkar
+**Omkar Waghmare**
 Engineering in Computer Science | Aspiring Data Scientist
