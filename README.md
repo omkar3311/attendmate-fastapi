@@ -48,7 +48,7 @@ Open API Docs:
 
 🚧 Actively under development — focused on improving accuracy, tracking, and UI integration.
 
-## 👨‍💻 Author
+## 👨‍💻 **Author**
 
-**Omkar Waghmare**
+**Omkar**  
 Engineering in Computer Science | Aspiring Data Scientist
