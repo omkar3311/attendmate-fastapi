@@ -3,26 +3,370 @@
 <head>
     <meta charset="UTF-8">
     <title>AttendMate</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
     <style>
-        body {
-        height: 100vh;
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: white;
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            background: radial-gradient( circle at top, #2c5364, #0f2027 70%);
+            color: white;
+            overflow: hidden;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .login-btn {
+            background: #46d782ff;
+            color: black;
+            padding: 8px 16px;  
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            font-size: 14px;
+            width: auto;         
+            }
+
+        .hero {
+            height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s ease;
+            animation: fadeUp 0.8s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .hero h1 {
+            font-size: 124px;
+            margin-bottom: -30px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            opacity: 0.75;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .get-started {
+            background: #2ecc71;
+            color: black;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .get-started:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.35);
+        }
+
+        .overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        background: rgba(15, 32, 39, 0.55); /* glass tint */
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        }
+
+        .container {
+        background: rgba(255, 255, 255, 0.95);
+        color: black;
+        padding: 20px;
+        width: 380px;         
+        border-radius: 14px;
+        }
+
+        .role-boxes {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .role {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .active {
+            background: #4ae159ff;
+            font-weight: bold;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .submit-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .submit-btn {
+            background: #2ecc4bff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+
+            padding: 10px 28px;   
+            width: auto;          
+            font-size: 15px;
+        }
+
+        label {
+        display: block;
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        }
+
+        .get-started {
+            background: #2ecc71;
+            color: black;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .arrow {
+            font-size: 26px;        
+            font-weight: 900;       
+            line-height: 1;
+            transition: transform 0.25s ease;
+        }
+
+        .get-started:hover .arrow {
+            transform: translateX(6px);
+        }
+
+        .brand-title {
+            font-size: 64px;
+            font-weight: 800;
+            transition: transform 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .brand-title:hover {
+            transform: translateY(-6px);
+            text-shadow:
+                0 0 8px rgba(46, 204, 113, 0.6),
+                0 0 16px rgba(46, 204, 113, 0.4);
+        }
+
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .ambient-bg span {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            background: rgba(46, 204, 113, 0.18);
+            filter: blur(80px);
+            border-radius: 50%;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+
+        .ambient-bg span:nth-child(1) {
+            top: 10%;
+            left: 15%;
+        }
+
+        .ambient-bg span:nth-child(2) {
+            top: 60%;
+            left: 65%;
+            animation-duration: 25s;
+        }
+
+        .ambient-bg span:nth-child(3) {
+            top: 30%;
+            left: 45%;
+            animation-duration: 30s;
+        }
+
+        @keyframes float {
+            from {
+                transform: translateY(0) translateX(0);
+            }
+            to {
+                transform: translateY(-120px) translateX(80px);
+            }
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+
     </style>
 </head>
 <body>
+<div class="ambient-bg">
+    <span></span>
+    <span></span>
+    <span></span>
+</div>
 
-    <div class="navbar">
-        <div class="logo">AttendMate</div>
-        <a href="/login" class="login-btn">Login</a>
-    </div>
+<div class="navbar">
+    <div class="logo">AttendMate</div>
+    <button class="login-btn" onclick="openLogin()" >Login</button>
+</div>
 
-    <div class="hero">
-        <h1>AttendMate</h1>
-        <p>Smart Attendance. Powered by AI.</p>
+<div class="hero" id="hero">
+    <h1 class="brand-title">AttendMate</h1>
+    <p>Smart Attendance. Powered by AI.</p>
+    <div class="get-started" onclick="openLogin()">Get Started <span class="arrow">👉</span> </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeLogin(event)">
+    <div class="container">
+
+        <div class="role-boxes">
+            <div id="studentBox" class="role active" onclick="selectRole('student')">Student</div>
+            <div id="teacherBox" class="role" onclick="selectRole('teacher')">Teacher</div>
+        </div>
+
+        <form method="post" action="/login">
+            <input type="hidden" name="role" id="role" value="student">
+
+            <div id="studentFields">
+                <label>Student Name:</label>
+                <input name="name" placeholder="Enter your name">
+
+                <label>PRN Number:</label>
+                <input name="prn" placeholder="Enter PRN number">
+
+                <label>Password:</label>
+                <input type="password" name="password" placeholder="Enter password">
+            </div>
+
+            <div id="teacherFields" class="hidden">
+                <label>Teacher ID:</label>
+                <input name="teacher_id" placeholder="Enter teacher ID">
+
+                <label>Teacher Name:</label>
+                <input name="teacher_name" placeholder="Enter your name">
+
+                <label>Password:</label>
+                <input type="password" name="teacher_password" placeholder="Enter password">
+            </div>
+
+
+            <div class="submit-wrapper">
+                <button class="submit-btn" type="submit">Login</button>
+            </div>
+
+        </form>
+
     </div>
+</div>
+
+<div class="footer">
+    © 2026 AttendMate
+</div>
+
+<script>
+function openLogin() {
+    document.getElementById("overlay").style.display = "flex";
+    document.getElementById("hero").style.opacity = "0";
+}
+
+function closeLogin(e) {
+    if (e.target.id === "overlay") {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("hero").style.opacity = "1";
+    }
+}
+
+function selectRole(role) {
+    document.getElementById("role").value = role;
+
+    const studentBox = document.getElementById("studentBox");
+    const teacherBox = document.getElementById("teacherBox");
+    const studentFields = document.getElementById("studentFields");
+    const teacherFields = document.getElementById("teacherFields");
+
+    studentBox.classList.remove("active");
+    teacherBox.classList.remove("active");
+    studentFields.classList.add("hidden");
+    teacherFields.classList.add("hidden");
+
+    [...studentFields.querySelectorAll("input"),
+     ...teacherFields.querySelectorAll("input")]
+     .forEach(i => i.required = false);
+
+    if (role === "student") {
+        studentBox.classList.add("active");
+        studentFields.classList.remove("hidden");
+        studentFields.querySelectorAll("input")
+            .forEach(i => i.required = true);
+    } else {
+        teacherBox.classList.add("active");
+        teacherFields.classList.remove("hidden");
+        teacherFields.querySelectorAll("input")
+            .forEach(i => i.required = true);
+    }
+}
+
+window.onload = () => selectRole("student");
+</script>
 
 </body>
 </html>
