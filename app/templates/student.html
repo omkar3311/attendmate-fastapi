@@ -2,61 +2,134 @@
 <html>
 <head>
     <title>Student Dashboard</title>
+
     <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            color: #1f2937;
+
+            background:
+                radial-gradient(
+                    600px 400px at 10% 0%,
+                    rgba(46, 204, 113, 0.14),
+                    transparent 60%
+                ),
+                radial-gradient(
+                    500px 350px at 90% 15%,
+                    rgba(52, 211, 153, 0.12),
+                    transparent 55%
+                ),
+                linear-gradient(
+                    180deg,
+                    #f1f5f9 0%,
+                    #e2e8f0 100%
+                );
+
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: #1e293b;
+            color: #fff;
             padding: 20px;
+            text-align: center;
         }
+
+        header h1 {
+            font-size: 28px;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .content {
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+        }
+
         h2 {
-            margin-top: 30px;
-            color: #333;
+            margin: 30px 0 12px;
+            color: #1e293b;
+            font-size: 20px;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
         }
+
         th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
+            padding: 12px;
             text-align: center;
         }
+
         th {
-            background-color: #f4f4f4;
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
         }
+
+        tr:not(:last-child) td {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
         .present {
-            color: green;
-            font-weight: bold;
+            color: #16a34a;
+            font-weight: 600;
         }
+
         .absent {
-            color: red;
-            font-weight: bold;
+            color: #dc2626;
+            font-weight: 600;
         }
     </style>
 </head>
+
 <body>
 
-<h1>Attendance Dashboard</h1>
+<header>
+    <h1>AttendMate</h1>
+    <p>AI-Powered Live Attendance System</p>
+</header>
 
-{% for date, slots in attendance.items() %}
-    <h2>{{ date }}</h2>
+<div class="content">
+    {% for date, slots in attendance.items() %}
+        <h2>{{ date }}</h2>
 
-    <table>
-        <tr>
-            <th>Slot</th>
-            <th>Status</th>
-        </tr>
+        <table>
+            <tr>
+                <th>Slot</th>
+                <th>Status</th>
+            </tr>
 
-        {% for slot, status in slots.items() %}
-        <tr>
-            <td>{{ slot }}</td>
-            <td class="{{ 'present' if status == 'Present' else 'absent' }}">
-                {{ status }}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-{% endfor %}
+            {% for slot, status in slots.items() %}
+            <tr>
+                <td>{{ slot }}</td>
+                <td class="{{ 'present' if status == 'Present' else 'absent' }}">
+                    {{ status }}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
+</div>
 
 </body>
 </html>
