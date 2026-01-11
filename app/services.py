@@ -147,28 +147,32 @@ def get_student_attendance(name: str):
 
     return attendance
 
-def login_or_register_student(name: str, prn: str, password: str) -> bool:
+def login_or_register_student(name: str, prn: str, password: str):
     res = (
         supabase
         .table("students")
-        .select("id, password")
-        .eq("name", name)
+        .select("id, name, password")
         .eq("prn", prn)
         .execute()
     )
 
-    if not res.data:
-        insert_res = (
-            supabase
-            .table("students")
-            .insert({
-                "name": name,
-                "prn": prn,
-                "password": password
-            })
-            .execute()
-        )
-        return True 
+    # PRN exists → login case
+    if res.data:
+        student = res.data[0]
 
-    stored_password = res.data[0]["password"]
-    return stored_password == password
+        if student["name"] != name:
+            return False, "PRN already registered with another name"
+
+        if student["password"] != password:
+            return False, "Invalid password"
+
+        return True, "Login successful"
+
+    # PRN does NOT exist → register case
+    supabase.table("students").insert({
+        "name": name,
+        "prn": prn,
+        "password": password
+    }).execute()
+
+    return True, "Registered successfully"
