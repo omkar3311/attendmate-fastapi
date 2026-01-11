@@ -54,7 +54,7 @@ def generate_frames():
             global LAST_SLOT
             current_slot = get_current_lecture_slot()
             if LAST_SLOT and current_slot != LAST_SLOT:
-                save_slot_to_supabase(attendance_tracker,LAST_SLOT)
+                save_slot_attendance(attendance_tracker,LAST_SLOT)
             LAST_SLOT = current_slot
 
             results = model.track(frame, conf=0.4, classes=[0],persist=True,tracker="bytetrack.yaml")
@@ -134,12 +134,15 @@ def login(
     teacher_password: str = Form(None),
 ):
     if role == "student":
-        ok = login_or_register_student(name, prn, password)
+        ok, message = login_or_register_student(name, prn, password)
 
         if not ok:
             return templates.TemplateResponse(
                 "login.html",
-                {"request": request, "error": "Invalid credentials"}
+                {
+                    "request": request,
+                    "error": message
+                }
             )
 
         return RedirectResponse(
@@ -151,13 +154,17 @@ def login(
         if teacher_id != "123":
             return templates.TemplateResponse(
                 "login.html",
-                {"request": request, "error": "Invalid teacher ID"}
+                {
+                    "request": request,
+                    "error": "Invalid teacher ID"
+                }
             )
 
         return RedirectResponse(
             url="/index",
             status_code=302
         )
+
 @app.get("/")
 def home_page(request: Request):
     return templates.TemplateResponse("home.html", {"request": request})
