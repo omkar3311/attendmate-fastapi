@@ -63,20 +63,28 @@ def download_csv():
     export_attendance_csv(filename)
     return FileResponse(filename, media_type="text/csv", filename=filename)
 
+def get_all_students():
+    res = supabase.table("students").select("name").execute()
+    return [s["name"] for s in res.data]
+
 def save_slot_attendance(attendance_tracker, slot):
     today = date.today().isoformat()
-    if today not in attendance_tracker:
-        return
-    if slot not in attendance_tracker[today]:
-        return
-    for name, record in attendance_tracker[today][slot].items():
-        session_minutes = int(record["total_time"] // 60)
+    all_students = get_all_students()
+    slot_data = attendance_tracker.get(today, {}).get(slot, {})
+
+    for student in all_students:
+        record = slot_data.get(student)
+        if record:
+            session_minutes = int(record["total_time"] // 60)
+        else:
+            session_minutes = 0
+        status = "Present" if session_minutes >= 1 else "Absent"
 
         try:
             existing = (
                 supabase.table("attendance")
                 .select("minutes")
-                .eq("name", name)
+                .eq("name", student)
                 .eq("date", today)
                 .eq("slot", slot)
                 .limit(1)
@@ -90,13 +98,13 @@ def save_slot_attendance(attendance_tracker, slot):
                 supabase.table("attendance").update({
                     "minutes": total_minutes,
                     "status": status
-                }).eq("name", name).eq("date", today).eq("slot", slot).execute()
+                }).eq("name", student).eq("date", today).eq("slot", slot).execute()
 
             else:
                 status = "Present" if session_minutes >= 1 else "Absent"
 
                 supabase.table("attendance").insert({
-                    "name": name,
+                    "name": student,
                     "date": today,
                     "slot": slot,
                     "minutes": session_minutes,
@@ -156,7 +164,6 @@ def login_or_register_student(name: str, prn: str, password: str):
         .execute()
     )
 
-    # PRN exists → login case
     if res.data:
         student = res.data[0]
 
@@ -168,7 +175,6 @@ def login_or_register_student(name: str, prn: str, password: str):
 
         return True, "Login successful"
 
-    # PRN does NOT exist → register case
     supabase.table("students").insert({
         "name": name,
         "prn": prn,
@@ -176,3 +182,5 @@ def login_or_register_student(name: str, prn: str, password: str):
     }).execute()
 
     return True, "Registered successfully"
+
+
