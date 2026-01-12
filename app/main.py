@@ -17,7 +17,7 @@ model = YOLO("yolov8n.pt")
 
 load_known_faces()
 
-camera = cv2.VideoCapture(0)
+
 recognized_faces = {}
 TODAY = date.today().isoformat()
 LAST_SLOT = None
@@ -41,7 +41,7 @@ def get_current_lecture_slot():
     return None
 
 def generate_frames():
-    person_counter = 0
+    camera = cv2.VideoCapture(0)
     while True:
         try:
             success, frame = camera.read()
@@ -138,10 +138,12 @@ def login(
 
         if not ok:
             return templates.TemplateResponse(
-                "login.html",
+                "home.html",
                 {
                     "request": request,
-                    "error": message
+                    "error": message,
+                    "open_login": True,
+                    "active_role": "student"
                 }
             )
 
@@ -153,7 +155,7 @@ def login(
     if role == "teacher":
         if teacher_id != "123":
             return templates.TemplateResponse(
-                "login.html",
+                "home.html",
                 {
                     "request": request,
                     "error": "Invalid teacher ID"
@@ -167,11 +169,9 @@ def login(
 
 @app.get("/")
 def home_page(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse("home.html", {"request": request ,"error": None,
+            "open_login": False})
 
-@app.get("/login")
-def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/index")
 def teacher_dashboard(request: Request):
@@ -181,11 +181,30 @@ def teacher_dashboard(request: Request):
 def student_dashboard(request: Request, name: str):
     # name = "omkar"
     attendance = get_student_attendance(name)
+    total_slots = 0
+    present_count = 0
+
+    for _, slots in attendance.items():
+        for _, status in slots.items():
+            total_slots += 1
+            if status == "Present":
+                present_count += 1
+
+    absent_count = total_slots - present_count
+    attendance_percent = (
+        round((present_count / total_slots) * 100, 2)
+        if total_slots > 0 else 0
+    )
+
     return templates.TemplateResponse(
         "student.html",
         {
             "request": request,
-            "attendance": attendance
+            "attendance": attendance,
+            "student_name": name,
+            "present_days": present_count,
+            "absent_days": absent_count,
+            "attendance_percent": attendance_percent
         }
     )
 
