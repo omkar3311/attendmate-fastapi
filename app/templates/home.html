@@ -254,6 +254,15 @@
             font-size: 12px;
             opacity: 0.5;
         }
+        .error-msg {
+            color: #ff4d4d;
+            background: rgba(255, 0, 0, 0.08);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
 
     </style>
 </head>
@@ -285,7 +294,7 @@
 
         <form method="post" action="/login">
             <input type="hidden" name="role" id="role" value="student">
-
+            
             <div id="studentFields">
                 <label>Student Name:</label>
                 <input name="name" placeholder="Enter your name">
@@ -295,6 +304,9 @@
 
                 <label>Password:</label>
                 <input type="password" name="password" placeholder="Enter password">
+                {% if error %}
+                <p class="error-msg">{{ error }}</p>
+            {% endif %}
             </div>
 
             <div id="teacherFields" class="hidden">
@@ -365,7 +377,14 @@ function selectRole(role) {
     }
 }
 
-window.onload = () => selectRole("student");
+window.onload = () => {
+    {% if open_login %}
+        openLogin();
+        selectRole("{{ active_role }}");
+    {% else %}
+        selectRole("student");
+    {% endif %}
+};
 </script>
 
 </body>
