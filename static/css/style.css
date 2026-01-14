@@ -1,0 +1,123 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
+}
+
+body {
+    background: #f4f6f9;
+    color: #333;
+}
+
+header {
+    background: #1e293b;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 28px;
+}
+
+header p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.container {
+    display: flex;
+    gap: 30px;
+    padding: 30px;
+}
+
+.left-panel,
+.right-panel {
+    flex: 1;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.card h2 {
+    margin-bottom: 15px;
+    color: #1e293b;
+}
+
+.card img {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+form input[type="file"] {
+    display: block;
+    margin-bottom: 12px;
+}
+
+form button {
+    padding: 10px 16px;
+    background: #2563eb;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+form button:hover {
+    background: #1e40af;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+th {
+    background: #f1f5f9;
+    font-weight: 600;
+}
+
+.download-card {
+    text-align: center;
+}
+
+.download-btn {
+    padding: 12px 20px;
+    font-size: 15px;
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.download-btn:hover {
+    background: #15803d;
+}
+
+.live-feed {
+    border: 4px solid transparent;
+    border-radius: 10px;
+    transition: border 0.3s ease;
+}
+
+.live-feed.active {
+    border: 4px solid #15911b;
+    box-shadow: 0 0 15px rgba(0, 255, 76, 0.6);
+}
