@@ -4,11 +4,9 @@
 It leverages **computer vision models (YOLO / face recognition)** and a **high-performance backend** to deliver fast, accurate, and scalable attendance recording without manual intervention.
 
 ---
-## 🎥 Demo Video
+## 🎥 Demo Image
 
-Click to watch 👇
-
-[Watch Video](Attendmate.mp4)
+![Demo ScreenShot](Attendmate.png)
 
 ---
 
