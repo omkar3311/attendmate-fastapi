@@ -7,7 +7,7 @@ import os
 import face_recognition
 from ultralytics import YOLO
 from datetime import datetime,date
-from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance,login_or_register_student
+from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance,login_or_register_student,check_password,superkey,encrypt_password
 
 app = FastAPI()
 app.include_router(router)
@@ -54,6 +54,7 @@ def generate_frames():
             global LAST_SLOT
             current_slot = get_current_lecture_slot()
             if LAST_SLOT and current_slot != LAST_SLOT:
+                pass
                 save_slot_attendance(attendance_tracker,LAST_SLOT)
             LAST_SLOT = current_slot
 
@@ -153,7 +154,8 @@ def login(
         )
 
     if role == "teacher":
-        if teacher_id != "123":
+        hashed_superkey = encrypt_password(superkey)
+        if not check_password(teacher_id , hashed_superkey):
             return templates.TemplateResponse(
                 "home.html",
                 {
@@ -179,7 +181,6 @@ def teacher_dashboard(request: Request):
 
 @app.get("/student/dashboard")
 def student_dashboard(request: Request, name: str):
-    # name = "omkar"
     attendance = get_student_attendance(name)
     total_slots = 0
     present_count = 0

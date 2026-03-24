@@ -8,9 +8,12 @@ from datetime import datetime,date
 load_dotenv()
 import csv
 from fastapi.responses import FileResponse,JSONResponse
+import bcrypt
+
 
 key = os.getenv("key")
 url = os.getenv("url")
+superkey = os.getenv("superkey")
 supabase = create_client(url, key)
 router = APIRouter()
 
@@ -155,6 +158,12 @@ def get_student_attendance(name: str):
 
     return attendance
 
+def encrypt_password(password):
+    return bcrypt.hashpw(password.encode('utf-8') , bcrypt.gensalt()).decode('utf-8')
+
+def check_password(entered_pass , hashed_pass):
+    return bcrypt.checkpw(entered_pass.encode('utf-8'), hashed_pass.encode('utf-8'))
+
 def login_or_register_student(name: str, prn: str, password: str):
     res = (
         supabase
@@ -170,11 +179,13 @@ def login_or_register_student(name: str, prn: str, password: str):
         if student["name"] != name:
             return False, "PRN already registered with another name"
 
-        if student["password"] != password:
+        if not check_password(password, student["password"]):
             return False, "Invalid password"
 
         return True, "Login successful"
 
+    password = encrypt_password(password)
+    
     supabase.table("students").insert({
         "name": name,
         "prn": prn,
@@ -182,5 +193,3 @@ def login_or_register_student(name: str, prn: str, password: str):
     }).execute()
 
     return True, "Registered successfully"
-
-
