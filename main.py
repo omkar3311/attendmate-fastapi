@@ -17,7 +17,6 @@ model = YOLO("yolov8n.pt")
 
 load_known_faces()
 
-
 recognized_faces = {}
 TODAY = date.today().isoformat()
 LAST_SLOT = None
@@ -28,7 +27,7 @@ lecture_slots = [
     ("11:00", "12:00"),
     ("12:45", "13:45"),
     ("13:45", "14:45"),
-    ("15:00", "17:00")
+    ("15:00", "17:00"),
 ]
 
 def get_current_lecture_slot():

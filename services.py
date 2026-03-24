@@ -18,7 +18,7 @@ supabase = create_client(url, key)
 router = APIRouter()
 
 UPLOAD_FOLDER = "known_images"
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 KNOWN_IMAGES_DIR = os.path.join(BASE_DIR, "known_images")
 
 os.makedirs(KNOWN_IMAGES_DIR, exist_ok=True)
@@ -59,6 +59,7 @@ def load_known_faces():
             if encodings:
                 known_faces.append(encodings[0])
                 known_names.append(name)
+    print("Loaded faces:", len(known_faces))
 
 @router.get("/export/csv")
 def download_csv():
