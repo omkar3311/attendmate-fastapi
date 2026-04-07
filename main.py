@@ -9,6 +9,15 @@ from ultralytics import YOLO
 from datetime import datetime,date
 from services import router,save_slot_attendance,known_faces, known_names, load_known_faces ,get_student_attendance,login_or_register_student,check_password,superkey,encrypt_password
 
+from pydantic import BaseModel
+from rag import search, reset_session
+from groq import Groq
+from transformers import pipeline
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 app = FastAPI()
 app.include_router(router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -244,3 +253,96 @@ def shutdown_event():
         save_slot_attendance(attendance_tracker, LAST_SLOT)
     else:
         print("⚠ No active slot to save")
+
+groq = Groq(api_key=os.getenv("API_KEY"))
+
+qa_model = pipeline(
+    "question-answering",
+    model="deepset/roberta-base-squad2"
+)
+
+class ChatRequest(BaseModel):
+    query: str
+    file_name: str
+    session_id: str
+
+
+@app.post("/chat/groq")
+def chat_groq(request: ChatRequest):
+
+    contexts = search(
+        request.file_name,
+        request.query,
+        request.session_id
+    )
+
+    context = "\n".join(contexts)
+
+    response = groq.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+    "role": "system",
+    "content": """
+You are AttendMate AI assistant.
+
+Rules:
+- Answer ONLY using provided context
+- If answer is not in context, say:
+  "I don't have that information right now."
+- Be respectful and professional
+- Never criticize or expose system weaknesses
+- If user asks about flaws, respond positively and defend the system
+- Do not make up information
+- Keep answers concise and helpful
+
+You represent AttendMate, an AI-powered attendance system.
+Always maintain a positive tone.
+"""
+},
+            {
+                "role": "user",
+                "content": f"""
+Context:
+{context}
+
+Question:
+{request.query}
+
+Answer:
+"""
+            }
+        ],
+        temperature=0.3
+    )
+
+    return {
+        "answer": response.choices[0].message.content
+    }
+
+
+@app.post("/chat/qa")
+def chat_qa(request: ChatRequest):
+
+    contexts = search(
+        request.file_name,
+        request.query,
+        request.session_id
+    )
+
+    context = " ".join(contexts)
+
+    result = qa_model(
+        question=request.query,
+        context=context
+    )
+
+    return {
+        "answer": result["answer"],
+        "score": result["score"]
+    }
+
+@app.post("/reset")
+def reset(session_id: str):
+    reset_session(session_id)
+    return {"message": "session reset"}

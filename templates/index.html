@@ -205,7 +205,93 @@
             text-align: center;
             font-size: 0.95rem;
         }
+        #chatbot-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2563eb;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
 
+#chatbot-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 320px;
+    height: 420px;
+    background: white;
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    z-index: 9999;
+}
+
+#chatbot-header {
+    background: #1e293b;
+    color: white;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    cursor: move;
+}
+
+#chatbot-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#chatbot-input-area {
+    display: flex;
+    border-top: 1px solid #eee;
+}
+
+#chatbot-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+}
+
+#chatbot-send {
+    padding: 10px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.chat-user {
+    text-align: right;
+    margin: 5px 0;
+}
+
+.chat-bot {
+    text-align: left;
+    margin: 5px 0;
+}
+.typing::after{
+content:"...";
+animation:blink 1s infinite;
+margin-left:3px;
+}
+
+@keyframes blink{
+0%{opacity:0}
+50%{opacity:1}
+100%{opacity:0}
+}
     </style>
 </head>
 
@@ -261,7 +347,28 @@
         </div>
 
     </section>
+    
+<div id="chatbot-toggle">💬</div>
 
+<div id="chatbot-container">
+
+    <div id="chatbot-header">
+        <span>Ask about AttendMate</span>
+        <button id="chatbot-close">✖</button>
+    </div>
+
+    <div id="chatbot-messages"></div>
+
+    <div id="chatbot-input-area">
+        <input 
+            type="text" 
+            id="chatbot-input" 
+            placeholder="Ask something..."
+        />
+        <button id="chatbot-send">Send</button>
+    </div>
+
+</div>
 </main>
 
 <script src="/static/js/script.js"></script>

@@ -148,7 +148,93 @@
             background: #eef3ff;
             color: #1a73e8;
         }
+#chatbot-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2563eb;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
 
+#chatbot-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 320px;
+    height: 420px;
+    background: white;
+    border-radius: 12px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    z-index: 9999;
+}
+
+#chatbot-header {
+    background: #1e293b;
+    color: white;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    cursor: move;
+}
+
+#chatbot-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#chatbot-input-area {
+    display: flex;
+    border-top: 1px solid #eee;
+}
+
+#chatbot-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+}
+
+#chatbot-send {
+    padding: 10px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.chat-user {
+    text-align: right;
+    margin: 5px 0;
+}
+
+.chat-bot {
+    text-align: left;
+    margin: 5px 0;
+}
+.typing::after{
+content:"...";
+animation:blink 1s infinite;
+margin-left:3px;
+}
+
+@keyframes blink{
+0%{opacity:0}
+50%{opacity:1}
+100%{opacity:0}
+}
     </style>
 </head>
 
@@ -200,6 +286,166 @@
         </table>
     {% endfor %}
 </div>
+<div id="chatbot-toggle">💬</div>
+
+<div id="chatbot-container">
+
+    <div id="chatbot-header">
+        <span>Ask about AttendMate</span>
+        <button id="chatbot-close">✖</button>
+    </div>
+
+    <div id="chatbot-messages"></div>
+
+    <div id="chatbot-input-area">
+        <input 
+            type="text" 
+            id="chatbot-input" 
+            placeholder="Ask something..."
+        />
+        <button id="chatbot-send">Send</button>
+    </div>
+
+</div>
+
+<script>
+
+    const toggle = document.getElementById("chatbot-toggle");
+const container = document.getElementById("chatbot-container");
+const closeBtn = document.getElementById("chatbot-close");
+
+const input = document.getElementById("chatbot-input");
+const sendBtn = document.getElementById("chatbot-send");
+const messages = document.getElementById("chatbot-messages");
+
+let chatHistory = [];
+
+toggle.onclick = () => {
+    container.style.display = "flex";
+};
+
+closeBtn.onclick = () => {
+    container.style.display = "none";
+};
+
+sendBtn.onclick = sendMessage;
+input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+async function sendMessage(){
+
+let text = input.value.trim();
+if(!text) return;
+
+addMessage(text,"user");
+input.value = "";
+
+const botDiv = document.createElement("div");
+botDiv.className = "chat-bot";
+
+botDiv.innerHTML = `<div class="stream-text"></div>`;
+
+messages.appendChild(botDiv);
+
+const streamText = botDiv.querySelector(".stream-text");
+
+messages.scrollTop = messages.scrollHeight;
+
+const response = await fetch("/chat/groq",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+query:text,
+file_name:"data/attendmate.txt",
+session_id:"student"
+})
+});
+
+const data = await response.json();
+
+let fullText = data.answer;
+
+let i = 0;
+
+function stream(){
+
+if(i < fullText.length){
+
+let current = fullText.substring(0,i);
+
+streamText.innerHTML = current + `<span class="typing">...</span>`;
+
+i++;
+
+messages.scrollTop = messages.scrollHeight;
+
+setTimeout(stream,8);
+
+}else{
+
+streamText.innerHTML = fullText;
+
+}
+
+}
+
+stream();
+
+}
+
+function addMessage(text, sender) {
+    const div = document.createElement("div");
+    div.className = sender === "user" ? "chat-user" : "chat-bot";
+    div.innerText = text;
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+
+    chatHistory.push({ sender, text });
+}
+
+
+// Draggable
+
+dragElement(toggle);
+
+function dragElement(el) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+    el.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        e.preventDefault();
+
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        document.onmouseup = closeDrag;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        el.style.top = (el.offsetTop - pos2) + "px";
+        el.style.left = (el.offsetLeft - pos1) + "px";
+    }
+
+    function closeDrag() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}   
+</script>
 
 </body>
 </html>
