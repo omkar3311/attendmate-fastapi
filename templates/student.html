@@ -150,90 +150,175 @@
         }
 #chatbot-toggle {
     position: fixed;
-    bottom: 20px;
+    top: auto;
+    left: auto;
+    bottom: 90px;
     right: 20px;
-    background: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
-    width: 60px;
-    height: 60px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
-    font-size: 28px;
+    font-size: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: grab;
+    cursor: pointer;
     z-index: 9999;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+    animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+    0%   { transform: translateY(0px); }
+    50%  { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+#chatbot-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
 }
 
 #chatbot-container {
     position: fixed;
+    top: auto;
+    left: auto;
     bottom: 90px;
     right: 20px;
-    width: 320px;
-    height: 420px;
-    background: white;
-    border-radius: 12px;
+    width: 340px;
+    height: 480px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+    border-radius: 18px;
     display: none;
     flex-direction: column;
-    box-shadow: 0 15px 30px rgba(0,0,0,0.25);
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
     z-index: 9999;
 }
 
 #chatbot-header {
-    background: #1e293b;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
     color: white;
-    padding: 12px;
+    padding: 14px 16px;
     display: flex;
     justify-content: space-between;
-    cursor: move;
+    align-items: center;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
+#chatbot-close {
+    background: transparent;
+    border: none;
+    color: #cbd5f5;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#chatbot-close:hover {
+    color: white;
+}
+
 
 #chatbot-messages {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
 }
+
+.chat-user,
+.chat-bot {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.4;
+    animation: fadeIn 0.2s ease;
+}
+
+.chat-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bot {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: #0f172a;
+    border-bottom-left-radius: 4px;
+}
+
 
 #chatbot-input-area {
     display: flex;
-    border-top: 1px solid #eee;
+    padding: 10px;
+    gap: 8px;
+    border-top: 1px solid #e2e8f0;
+    background: rgba(255,255,255,0.9);
 }
 
 #chatbot-input {
     flex: 1;
-    padding: 10px;
-    border: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
     outline: none;
+    font-size: 14px;
+    transition: 0.2s;
 }
 
+#chatbot-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+
+
 #chatbot-send {
-    padding: 10px;
-    background: #2563eb;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: white;
     border: none;
     cursor: pointer;
+    transition: 0.2s;
+    font-weight: 500;
 }
 
-.chat-user {
-    text-align: right;
-    margin: 5px 0;
+#chatbot-send:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
 }
 
-.chat-bot {
-    text-align: left;
-    margin: 5px 0;
-}
-.typing::after{
-content:"...";
-animation:blink 1s infinite;
-margin-left:3px;
+
+.typing::after {
+    content: "...";
+    animation: blink 1s infinite;
+    margin-left: 3px;
 }
 
-@keyframes blink{
-0%{opacity:0}
-50%{opacity:1}
-100%{opacity:0}
+@keyframes blink {
+    0% {opacity: 0}
+    50% {opacity: 1}
+    100% {opacity: 0}
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
     </style>
 </head>
@@ -407,8 +492,6 @@ function addMessage(text, sender) {
     chatHistory.push({ sender, text });
 }
 
-
-// Draggable
 
 dragElement(toggle);
 
